@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+samples/
+outputs/
+embeddings/
+dataset/images/
+models/pretrained/
+models/trained/
+.pytest_cache/
