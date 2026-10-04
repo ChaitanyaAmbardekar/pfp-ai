@@ -3,7 +3,7 @@ import csv
 import itertools
 from pathlib import Path
 
-RANKING = ["s2", "s4", "s3", "s8", "s6", "s7", "s5"]   # best -> worst. Edit if s5 is wrong.
+RANKING = ["s2", "s3", "s8", "s6", "s7", "s4", "s5"] # best -> worst. Edit if s5 is wrong.
 
 out = Path("dataset/labels")
 out.mkdir(parents=True, exist_ok=True)
