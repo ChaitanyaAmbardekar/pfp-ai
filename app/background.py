@@ -44,7 +44,8 @@ def analyze_background(crop_bgr, plan, face, body=None, size=128) -> BackgroundI
 
     # Person rectangle in small-crop coordinates.
     cx = (face.center[0] - plan.x) * k
-    if body is not None and body.shoulders and body.landmarks:
+    if (body is not None and body.shoulders and "l_shoulder" in body.landmarks
+            and "r_shoulder" in body.landmarks):
         span = abs(body.landmarks["l_shoulder"][0] - body.landmarks["r_shoulder"][0])
         half = max(0.65 * span, 0.8 * face.w) * k
     else:

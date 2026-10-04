@@ -19,7 +19,7 @@ TH = {
     "vis": 0.8,         # minimum visibility for shoulders / hips / knees
     "ankle_vis": 0.6,   # ankles are often partly occluded
     "edge": 0.98,       # landmark must be above this fraction of image height
-    "min_torso": 2.0,   # shoulder->hip distance, in face heights
+    "min_torso": 2.6,   # shoulder->hip distance, in face heights
     "min_knee": 4.0,    # shoulder->knee
     "min_ankle": 5.5,   # shoulder->ankle
 }
@@ -118,4 +118,3 @@ class PoseDetector:
 
     def close(self):
         self._landmarker.close()
-        

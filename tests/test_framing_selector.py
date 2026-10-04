@@ -62,3 +62,7 @@ def test_full_body_unavailable_when_body_not_visible():
     img, det, body = _setup()
     full = [c for c in select_framing(img, det, body) if c.name == "full_body"][0]
     assert not full.available
+    
+def test_s2_real_numbers_fake_hips_rejected():     # measured from the real s2 photo
+    b = classify_landmarks(lms(536, 925, 1170, 1075), 1254, 185)
+    assert not b.hips and b.level == "head_shoulders"
