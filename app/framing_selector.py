@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from app.background import analyze_background
+from app.composition import source_detail
 from app.pfp_simulator import SquareCrop, crop_square, evaluate, plan_square_crop
 
 NAMES = ("face", "head_shoulders", "upper_body", "full_body")
@@ -86,7 +87,7 @@ def _cuts_at_joint(plan, body, face, img_h):
     return any(abs(bottom - body.landmarks[j][1]) < JOINT_TOL * face.h for j in joints)
 
 
-def select_framing(bgr, detection, body, det_small=None):
+def select_framing(bgr, detection, body, det_small=None, source_scale=1.0):
     """Return candidates sorted best-first (unavailable ones last)."""
     face = detection.primary
     if face is None:
@@ -106,6 +107,8 @@ def select_framing(bgr, detection, body, det_small=None):
         square = crop_square(bgr, plan)
         report = evaluate(square, plan, face, det_small)
         readability = report.robustness / 100
+        detail = source_detail(face, source_scale)    # real pixels in the ORIGINAL photo
+        readability *= 0.5 + 0.5 * detail
         notes = []
         if "face_small_at_64px" in report.flags:
             readability *= 0.6
@@ -136,7 +139,7 @@ def select_framing(bgr, detection, body, det_small=None):
 
         score = 100 * (W_READ * readability + W_CONTEXT * context + W_CLEAN * clean) \
             + PREF[name] + bg_points
-        if "crop_low_resolution" in report.flags:
+        if plan.side * source_scale < 200:            # judged on original pixels
             score -= LOW_RES_PENALTY
             notes.append("few source pixels (looks soft)")
         out.append(Candidate(name, True, plan, report, readability, context, clean,

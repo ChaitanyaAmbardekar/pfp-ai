@@ -62,7 +62,15 @@ def test_full_body_unavailable_when_body_not_visible():
     img, det, body = _setup()
     full = [c for c in select_framing(img, det, body) if c.name == "full_body"][0]
     assert not full.available
-    
+
 def test_s2_real_numbers_fake_hips_rejected():     # measured from the real s2 photo
     b = classify_landmarks(lms(536, 925, 1170, 1075), 1254, 185)
     assert not b.hips and b.level == "head_shoulders"
+    
+def test_source_scale_helps_small_faces():
+    img = np.full((1000, 1000, 3), 128, np.uint8)
+    det = DetectionResult(1000, 1000, [face_at(480, 300, 40, 48)], 0)
+    body = BodyExtent("head_shoulders", True, False, False, False, {}, [])
+    lo = {c.name: c for c in select_framing(img, det, body)}["face"]
+    hi = {c.name: c for c in select_framing(img, det, body, source_scale=3.0)}["face"]
+    assert hi.readability > lo.readability and hi.score > lo.score
