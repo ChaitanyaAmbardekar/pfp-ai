@@ -50,7 +50,7 @@ If either command fails, install Python 3.11 from python.org (tick "Add Python t
 ### 1. Download the project
 
 ```powershell
-git clone https://github.com/YOUR-USERNAME/pfp-ai.git
+git clone https://github.com/ChaitanyaAmbardekar/pfp-ai.git
 cd pfp-ai
 ```
 
