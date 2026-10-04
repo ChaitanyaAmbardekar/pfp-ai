@@ -1,12 +1,13 @@
 """Choose the best PFP framing for each photo from several candidate crops.
 
 score = 100 * (W_READ*readability + W_CONTEXT*context + W_CLEAN*cleanliness)
-        + PREF[framing] - low-resolution penalty
+        + PREF[framing] + background points - low-resolution penalty
 Weights are provisional. PREF is a placeholder for learned taste (Version 2).
 """
 from dataclasses import dataclass, field
 from typing import Optional
 
+from app.background import analyze_background
 from app.pfp_simulator import SquareCrop, crop_square, evaluate, plan_square_crop
 
 NAMES = ("face", "head_shoulders", "upper_body", "full_body")
@@ -16,6 +17,9 @@ EXTRA_FACE_PENALTY = 0.8              # cleanliness lost per other face in the c
 JOINT_CUT_PENALTY = 0.3               # crop edge cutting at hips / knees
 LOW_RES_PENALTY = 8.0
 JOINT_TOL = 0.4                       # in face heights
+SCENERY_CAP = 8.0                     # max points scenery can add
+CLUTTER_CAP = 6.0                     # max points a busy background can remove
+BG_MIN_READABILITY = 0.6              # no scenery bonus if the face is hard to read
 
 
 @dataclass
@@ -29,6 +33,8 @@ class Candidate:
     cleanliness: float = 0.0
     score: float = 0.0
     notes: list = field(default_factory=list)
+    background: object = None
+    bg_points: float = 0.0
 
 
 def _full_body_plan(w, h, face, body):
@@ -97,7 +103,8 @@ def select_framing(bgr, detection, body, det_small=None):
             out.append(Candidate(name, False, plan, notes=["photo has no room for this framing"]))
             continue
 
-        report = evaluate(crop_square(bgr, plan), plan, face, det_small)
+        square = crop_square(bgr, plan)
+        report = evaluate(square, plan, face, det_small)
         readability = report.robustness / 100
         notes = []
         if "face_small_at_64px" in report.flags:
@@ -118,11 +125,22 @@ def select_framing(bgr, detection, body, det_small=None):
             clean = max(0.0, clean - JOINT_CUT_PENALTY)
             notes.append("crop edge cuts at a joint (hips/knees)")
 
-        score = 100 * (W_READ * readability + W_CONTEXT * context + W_CLEAN * clean) + PREF[name]
+        # Background: scenery can add points, clutter removes points.
+        bg = analyze_background(square, plan, face, body)
+        bonus = SCENERY_CAP * bg.scenery if (readability >= BG_MIN_READABILITY and extra == 0) else 0.0
+        bg_points = bg.weight * (bonus - CLUTTER_CAP * bg.clutter)
+        if bg_points >= 2:
+            notes.append("scenery adds interest")
+        elif bg_points <= -2:
+            notes.append("busy background")
+
+        score = 100 * (W_READ * readability + W_CONTEXT * context + W_CLEAN * clean) \
+            + PREF[name] + bg_points
         if "crop_low_resolution" in report.flags:
             score -= LOW_RES_PENALTY
             notes.append("few source pixels (looks soft)")
-        out.append(Candidate(name, True, plan, report, readability, context, clean, score, notes))
+        out.append(Candidate(name, True, plan, report, readability, context, clean,
+                             score, notes, bg, bg_points))
 
     out.sort(key=lambda c: (not c.available, -c.score))
     return out
