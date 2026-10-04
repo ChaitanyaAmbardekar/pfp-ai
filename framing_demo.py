@@ -29,7 +29,7 @@ def run(path, det, det_small, pose):
         print(f"  note: {n}")
 
     cands = select_framing(bgr, d, body, det_small)
-    print("  framing          score  read  ctx  clean  notes")
+    print("  framing          score  read  ctx  clean    bg   notes")
     folder = OUT / path.stem
     folder.mkdir(parents=True, exist_ok=True)
     for c in cands:
@@ -37,7 +37,10 @@ def run(path, det, det_small, pose):
             print(f"  {c.name:<15}    --   unavailable: {'; '.join(c.notes)}")
             continue
         print(f"  {c.name:<15} {c.score:6.1f}  {c.readability:4.2f} {c.context:4.1f}  "
-              f"{c.cleanliness:4.1f}  {'; '.join(c.notes)}")
+              f"{c.cleanliness:4.1f}  {c.bg_points:+5.1f}  {'; '.join(c.notes)}")
+        b = c.background
+        print(f"      background: fills {b.bg_fraction * 100:.0f}% of circle | interest {b.interest:.2f} "
+              f"separation {b.separation:.2f} clutter {b.clutter:.2f} -> scenery {b.scenery:.2f}")
         cv2.imwrite(str(folder / f"cand_{c.name}.png"),
                     to_circle(crop_square(bgr, c.plan), 256))
     best = next((c for c in cands if c.available), None)
@@ -63,4 +66,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
