@@ -1,0 +1,10 @@
+{
+  "weights": {
+    "face_visibility": 0.20,
+    "robustness": 0.20,
+    "framing": 0.15,
+    "lighting": 0.15,
+    "sharpness": 0.15,
+    "background": 0.15
+  }
+}
