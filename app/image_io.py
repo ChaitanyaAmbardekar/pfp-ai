@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageOps
 
-SUPPORTED = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+SUPPORTED = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".heic", ".heif"}
 
 
 def load_image_bgr(path, max_side: int = 1280):
@@ -30,3 +30,8 @@ def load_image_bgr(path, max_side: int = 1280):
         rgb = np.asarray(im)
 
     return cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR), original_size
+try:  # optional: lets Pillow open iPhone-style HEIC files
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass
